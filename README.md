@@ -78,31 +78,29 @@ APK появится в `android/app/build/outputs/apk/debug/app-debug.apk` —
 установить Android Studio, она ставит и то и другое; можно и собрать через
 Build → Build APK(s)).
 
-### Решение: `Unsupported class file major version 69`
+### Решение проблем с JDK
 
-Gradle 8.14.x не умеет работать с **Java 25** (major version 69). Нужна
-JDK 17 (или 21). Самый простой фикс на Windows:
+Capacitor 7 требует для сборки **JDK 21**:
+- Java 25 → ошибка `Unsupported class file major version 69`
+- Java 17 → ошибка `invalid source release: 21`
 
-```cmd
-:: если установлена Android Studio — берём её встроенную JDK:
-set "JAVA_HOME=C:\Program Files\Android\Android Studio\jbr"
-cd android
-gradlew.bat assembleDebug
-```
-
-Или установить Temurin 17:
-
-```cmd
-winget install EclipseAdoptium.Temurin.17.JDK
-set "JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-17.0.13+11"
-```
-
-Чтобы не задавать каждый раз, добавьте строку в `android/gradle.properties`
-(слэши вперёд, либо двойные обратные):
+Самый простой фикс на Windows — встроенная JBR 21 из Android Studio.
+В файле `android/gradle.properties` (слэши вперёд):
 
 ```
 org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
 ```
+
+Или установить Temurin 21:
+
+```cmd
+winget install EclipseAdoptium.Temurin.21.JDK
+:: затем в gradle.properties:
+:: org.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-21.0.9+10
+```
+
+После смены JDK обязательно перезапустите демон: `gradlew.bat --stop`.
+Проверка: `gradlew.bat -version` → строка `JVM: 21.0.x`.
 
 ### Путь 3 — PWABuilder
 
