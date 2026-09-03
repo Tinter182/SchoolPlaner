@@ -18,7 +18,10 @@
 - Полное редактирование расписания в настройках: добавление, переименование,
   смена иконки/цвета/дня/времени (колесный time picker), удаление с подтверждением.
   Задания привязаны к уроку и **не теряются** при переносе урока на другой день
-- Светлая и тёмная темы, демо-данные только при первом запуске
+- Светлая и тёмная темы, **регулируемый размер интерфейса** (настройки → 4 ступени),
+  демо-данные только при первом запуске
+- На Android — полноэкранный режим: системная панель уведомлений скрывается
+  плагином `@capacitor/status-bar`
 
 ## Структура
 
@@ -43,9 +46,66 @@ npm run dev        # разработка
 npm run build      # прод-сборка в dist/
 ```
 
-## Android
+## Запуск на телефоне (Android)
 
-Приложение — mobile-first PWA: откройте его в Chrome на телефоне и выберите
-«Добавить на главный экран» — оно установится как приложение (иконка, полноэкранный
-режим, офлайн-хранение данных). Для нативной обёртки APK проект совместим с
-Capacitor/Bubblewrap поверх собранного `dist/`.
+### Путь 1 — PWA (быстро, без Android Studio)
+
+1. `npm run build` → появится папка `dist/`
+2. Разместите `dist/` на любом HTTPS-хостинге (быстрее всего — Netlify Drop:
+   app.netlify.com/drop, просто перетащите папку)
+3. Откройте ссылку в Chrome на телефоне → ⋮ → «Установить приложение» /
+   «Добавить на главный экран»
+
+Получится иконка на рабочем столе, полноэкранный режим и офлайн-работа
+(service worker кэширует приложение после первого визита). Данные хранятся
+в localStorage телефона.
+
+### Путь 2 — настоящий APK (Capacitor)
+
+```bash
+npm run build
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap init "Дневник" "com.dnevnik.app" --web-dir=dist
+npx cap add android
+npx cap sync
+
+# Windows:
+cd android && gradlew.bat assembleDebug
+# Linux/macOS:
+cd android && ./gradlew assembleDebug
+```
+
+APK появится в `android/app/build/outputs/apk/debug/app-debug.apk` —
+перекиньте файл на телефон и установите («Неизвестные источники» → разрешить),
+либо `adb install app-debug.apk`. Нужны JDK 17 и Android SDK (проще всего —
+установить Android Studio, она ставит и то и другое; можно и собрать через
+Build → Build APK(s)).
+
+### Решение проблем с JDK
+
+Capacitor 7 требует для сборки **JDK 21**:
+- Java 25 → ошибка `Unsupported class file major version 69`
+- Java 17 → ошибка `invalid source release: 21`
+
+Самый простой фикс на Windows — встроенная JBR 21 из Android Studio.
+В файле `android/gradle.properties` (слэши вперёд):
+
+```
+org.gradle.java.home=C:/Program Files/Android/Android Studio/jbr
+```
+
+Или установить Temurin 21:
+
+```cmd
+winget install EclipseAdoptium.Temurin.21.JDK
+:: затем в gradle.properties:
+:: org.gradle.java.home=C:/Program Files/Eclipse Adoptium/jdk-21.0.9+10
+```
+
+После смены JDK обязательно перезапустите демон: `gradlew.bat --stop`.
+Проверка: `gradlew.bat -version` → строка `JVM: 21.0.x`.
+
+### Путь 3 — PWABuilder
+
+Разместите билд на HTTPS (см. путь 1), откройте pwabuilder.com, вставьте адрес —
+сервис соберёт подписанный APK в пару кликов, без Android Studio.

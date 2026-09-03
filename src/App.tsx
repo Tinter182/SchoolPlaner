@@ -1,33 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import type { Route } from "./types";
-import { StoreProvider } from "./storage/store";
+import { Capacitor } from "@capacitor/core";
+import { StatusBar } from "@capacitor/status-bar";
+import { StoreProvider, useStore } from "./storage/store";
 import { NavProvider, useNav } from "./nav";
 import { ToastProvider } from "./components/ui";
 import { MainScreen } from "./screens/MainScreen";
 import { ChatScreen } from "./screens/ChatScreen";
 import { SettingsScreen } from "./screens/SettingsScreen";
 import { CalendarScreen } from "./screens/CalendarScreen";
-import { formatClock } from "./utils/date";
-import { IconBattery, IconSignal, IconWifi } from "./components/icons";
-
-/* ---------- Статус-бар «устройства» с живыми часами ---------- */
-function StatusBar() {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const t = window.setInterval(() => setNow(new Date()), 15_000);
-    return () => window.clearInterval(t);
-  }, []);
-  return (
-    <div className="relative z-30 flex h-[32px] shrink-0 items-end justify-between bg-white px-7 pb-[3px] text-ink dark:bg-panel dark:text-white">
-      <span className="text-[12px] font-bold tabular-nums">{formatClock(now)}</span>
-      <span className="flex items-center gap-1.5 opacity-90">
-        <IconSignal size={13} />
-        <IconWifi size={14} />
-        <IconBattery size={22} />
-      </span>
-    </div>
-  );
-}
 
 /* ---------- Плавающие декорации рабочего стола ---------- */
 function Float({
@@ -70,7 +51,25 @@ function renderRoute(r: Route) {
 /** Оболочка: на телефоне — весь экран, на десктопе — «корпус» телефона. */
 function Shell() {
   const { stack, closing, pop } = useNav();
+  const { uiScale } = useStore();
   const top = stack.length - 1;
+
+  // На телефоне (Capacitor) убираем системную панель уведомлений —
+  // приложение занимает весь экран. В браузере вызов безопасно пропускается.
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      StatusBar.hide().catch(() => {});
+    }
+  }, []);
+
+  // Масштаб интерфейса: CSS-zoom + обратная ширина,
+  // чтобы контент честно перекомпоновывался, а не просто растягивался.
+  const zoomStyle = {
+    width: `${100 / uiScale}%`,
+    height: `${100 / uiScale}%`,
+    paddingTop: "env(safe-area-inset-top)",
+    zoom: uiScale,
+  } as CSSProperties;
 
   return (
     <div className="app-shell-bg relative flex min-h-[100dvh] items-center justify-center overflow-hidden">
@@ -83,35 +82,36 @@ function Shell() {
 
       <div className="relative flex h-[100dvh] w-full flex-col overflow-hidden bg-white dark:bg-night md:h-[min(870px,94vh)] md:w-[400px] md:rounded-[46px] md:border-[10px] md:border-[#0a1218] md:shadow-[0_50px_140px_-30px_rgba(0,0,0,0.85)]">
         <ToastProvider>
-          <StatusBar />
           {/* «вырез» камеры — только в корпусном режиме */}
-          <div className="pointer-events-none absolute left-1/2 top-[6px] z-[80] hidden h-[20px] w-[104px] -translate-x-1/2 rounded-full bg-[#0a1218] md:block" />
+          <div className="pointer-events-none absolute left-1/2 top-[8px] z-[80] hidden h-[20px] w-[104px] -translate-x-1/2 rounded-full bg-[#0a1218] md:block" />
 
           <div className="relative flex-1 overflow-hidden">
-            {stack.map((r, i) => {
-              const isTop = i === top;
-              return (
-                <div
-                  key={`${r.type}-${i}`}
-                  className={`absolute inset-0 transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] ${
-                    isTop
-                      ? closing
-                        ? "translate-x-full"
-                        : "translate-x-0"
-                      : "-translate-x-[28%]"
-                  }`}
-                >
-                  {!isTop && (
-                    <div
-                      className="absolute inset-0 z-[60] bg-[#0b1c26]/25 transition-opacity duration-300"
-                      onClick={pop}
-                      aria-hidden="true"
-                    />
-                  )}
-                  {renderRoute(r)}
-                </div>
-              );
-            })}
+            <div className="absolute left-0 top-0 overflow-hidden" style={zoomStyle}>
+              {stack.map((r, i) => {
+                const isTop = i === top;
+                return (
+                  <div
+                    key={`${r.type}-${i}`}
+                    className={`absolute inset-0 transition-transform duration-300 [transition-timing-function:cubic-bezier(0.32,0.72,0,1)] ${
+                      isTop
+                        ? closing
+                          ? "translate-x-full"
+                          : "translate-x-0"
+                        : "-translate-x-[28%]"
+                    }`}
+                  >
+                    {!isTop && (
+                      <div
+                        className="absolute inset-0 z-[60] bg-[#0b1c26]/25 transition-opacity duration-300"
+                        onClick={pop}
+                        aria-hidden="true"
+                      />
+                    )}
+                    {renderRoute(r)}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </ToastProvider>
       </div>

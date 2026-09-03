@@ -16,9 +16,17 @@ import {
   IconTrash,
 } from "../components/icons";
 
-/** Настройки: тема, полный редактор расписания, данные. */
+const SCALE_OPTIONS = [
+  { v: 0.85, label: "Мелкий" },
+  { v: 1, label: "Обычный" },
+  { v: 1.15, label: "Крупный" },
+  { v: 1.3, label: "Огромный" },
+] as const;
+
+/** Настройки: тема, размер интерфейса, редактор расписания, данные. */
 export function SettingsScreen() {
-  const { lessons, homework, theme, setTheme, deleteLesson, resetDemo } = useStore();
+  const { lessons, homework, theme, setTheme, uiScale, setUiScale, deleteLesson, resetDemo } =
+    useStore();
   const nav = useNav();
   const { toast } = useToast();
 
@@ -85,6 +93,50 @@ export function SettingsScreen() {
                 Тёмная
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Размер интерфейса */}
+        <div className="mt-3 rounded-[16px] bg-white px-4 py-3.5 shadow-sm dark:bg-panel">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[14.5px] font-semibold text-ink dark:text-white">
+                Размер интерфейса
+              </div>
+              <div className="text-[12px] text-gray-400 dark:text-gray-500">
+                Масштаб текста и элементов во всём приложении
+              </div>
+            </div>
+            <span
+              key={uiScale}
+              className="anim-pop font-display text-[17px] font-semibold tabular-nums text-accent"
+            >
+              {Math.round(uiScale * 100)}%
+            </span>
+          </div>
+          <div className="mt-3 flex items-center gap-2.5">
+            <span className="text-[12px] font-bold text-gray-300 dark:text-gray-600">Аа</span>
+            <div className="grid flex-1 grid-cols-4 gap-1 rounded-[13px] bg-mist p-1 dark:bg-bubble-dark">
+              {SCALE_OPTIONS.map((o) => {
+                const active = Math.abs(uiScale - o.v) < 0.001;
+                return (
+                  <button
+                    key={o.v}
+                    onClick={() => setUiScale(o.v)}
+                    className={`rounded-[9px] py-1.5 text-[12px] font-bold transition-all active:scale-95 ${
+                      active
+                        ? "bg-white text-accent-deep shadow dark:bg-white/15 dark:text-white"
+                        : "text-gray-400 hover:text-ink dark:hover:text-white"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+            <span className="text-[20px] font-bold leading-none text-gray-300 dark:text-gray-600">
+              Аа
+            </span>
           </div>
         </div>
 
