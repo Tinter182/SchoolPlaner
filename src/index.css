@@ -1,1 +1,159 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Golos Text", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: "Unbounded", "Golos Text", sans-serif;
+
+  --color-accent: #0e8fa3;
+  --color-accent-deep: #0a6b7c;
+  --color-accent-soft: #e0f2f5;
+  --color-ink: #122029;
+  --color-mist: #f2f6f8;
+  --color-panel: #17212b;
+  --color-night: #0e1621;
+  --color-bubble-dark: #182533;
+  --color-danger: #e5484d;
+  --color-done: #1a9e57;
+  --color-pending: #c98a1b;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------- Фон чата: школьные каракули ---------- */
+.chat-pattern {
+  background-color: #e6edf0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23155e75' stroke-opacity='.08' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 16v12M18 22h12'/%3E%3Ccircle cx='82' cy='28' r='6'/%3E%3Cpath d='M112 18q4-6 8 0t8 0'/%3E%3Cpath d='M28 92l6 10H22z'/%3E%3Cpath d='M76 98l2-6 12-12 4 4-12 12-6 2zM90 80l4 4'/%3E%3Cpath d='M113 88c-3-2.5-8-2.5-11 0v13c3-2.5 8-2.5 11 0 3-2.5 8-2.5 11 0V88c-3-2.5-8-2.5-11 0z'/%3E%3Crect x='46' y='50' width='9' height='9' transform='rotate(45 50.5 54.5)'/%3E%3Ccircle cx='58' cy='124' r='4'/%3E%3Cpath d='M120 128v8M116 132h8'/%3E%3Cpath d='M12 56q4-5 8 0t8 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 150px;
+}
+.dark .chat-pattern {
+  background-color: #0e1621;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='.055' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M24 16v12M18 22h12'/%3E%3Ccircle cx='82' cy='28' r='6'/%3E%3Cpath d='M112 18q4-6 8 0t8 0'/%3E%3Cpath d='M28 92l6 10H22z'/%3E%3Cpath d='M76 98l2-6 12-12 4 4-12 12-6 2zM90 80l4 4'/%3E%3Cpath d='M113 88c-3-2.5-8-2.5-11 0v13c3-2.5 8-2.5 11 0 3-2.5 8-2.5 11 0V88c-3-2.5-8-2.5-11 0z'/%3E%3Crect x='46' y='50' width='9' height='9' transform='rotate(45 50.5 54.5)'/%3E%3Ccircle cx='58' cy='124' r='4'/%3E%3Cpath d='M120 128v8M116 132h8'/%3E%3Cpath d='M12 56q4-5 8 0t8 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* ---------- Обёртка рабочего стола ---------- */
+.app-shell-bg {
+  background:
+    radial-gradient(1100px 700px at 12% -10%, rgba(14, 143, 163, 0.28), transparent 60%),
+    radial-gradient(900px 620px at 96% 18%, rgba(240, 171, 66, 0.14), transparent 55%),
+    radial-gradient(800px 700px at 55% 115%, rgba(26, 158, 87, 0.12), transparent 60%),
+    #0c161d;
+}
+.app-shell-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+  mask-image: radial-gradient(ellipse 90% 80% at 50% 40%, black 30%, transparent 75%);
+}
+
+/* ---------- Анимации ---------- */
+@keyframes rise {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop {
+  from { transform: scale(0.92); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes sheet-down {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+@keyframes toast-in {
+  from { transform: translateY(14px) scale(0.94); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes msg-flash {
+  0% { box-shadow: 0 0 0 3px rgba(14, 143, 163, 0.55); }
+  100% { box-shadow: 0 0 0 3px rgba(14, 143, 163, 0); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0) rotate(var(--rot, 0deg)); }
+  50% { transform: translateY(-12px) rotate(var(--rot, 0deg)); }
+}
+@keyframes dashdraw {
+  from { stroke-dashoffset: 26; }
+  to { stroke-dashoffset: 0; }
+}
+@keyframes bounce-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.anim-rise { animation: rise 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-fade { animation: fadein 0.25s ease both; }
+.anim-pop { animation: pop 0.24s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-sheet-up { animation: sheet-up 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-sheet-down { animation: sheet-down 0.26s ease both; }
+.anim-toast { animation: toast-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.anim-floaty { animation: floaty 7s ease-in-out infinite; }
+.anim-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.msg-flash { animation: msg-flash 1.6s ease-out 2; }
+
+.checks-draw path {
+  stroke-dasharray: 26;
+  animation: dashdraw 0.4s ease forwards;
+}
+.checks-draw path:nth-child(2) {
+  animation-delay: 0.14s;
+  stroke-dashoffset: 26;
+}
+
+/* Каскадная задержка появления строк списка */
+.stagger > * { animation: rise 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.stagger > *:nth-child(1) { animation-delay: 0.02s; }
+.stagger > *:nth-child(2) { animation-delay: 0.05s; }
+.stagger > *:nth-child(3) { animation-delay: 0.08s; }
+.stagger > *:nth-child(4) { animation-delay: 0.11s; }
+.stagger > *:nth-child(5) { animation-delay: 0.14s; }
+.stagger > *:nth-child(6) { animation-delay: 0.17s; }
+.stagger > *:nth-child(7) { animation-delay: 0.2s; }
+.stagger > *:nth-child(8) { animation-delay: 0.23s; }
+.stagger > *:nth-child(9) { animation-delay: 0.26s; }
+.stagger > *:nth-child(10) { animation-delay: 0.29s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

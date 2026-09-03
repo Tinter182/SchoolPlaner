@@ -1,0 +1,14 @@
+{
+  "name": "Дневник — расписание и домашние задания",
+  "short_name": "Дневник",
+  "description": "Офлайн-дневник школьника: расписание уроков и домашние задания.",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c161d",
+  "theme_color": "#0e8fa3",
+  "lang": "ru",
+  "icons": [
+    { "src": "icons/app-icon.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
