@@ -64,10 +64,18 @@ function Shell() {
 
   // Масштаб интерфейса: CSS-zoom + обратная ширина,
   // чтобы контент честно перекомпоновывался, а не просто растягивался.
+  //
+  // Отступ под вырез камеры: при скрытой системной панели env() на части
+  // устройств отдаёт 0, поэтому на телефоне гарантируем минимум 32px —
+  // кнопки шапки («←», «⊕», «⋮») всегда остаются ниже выреза.
+  // В браузере — обычный safe-area без лишнего отступа.
+  const native = Capacitor.isNativePlatform();
   const zoomStyle = {
     width: `${100 / uiScale}%`,
     height: `${100 / uiScale}%`,
-    paddingTop: "env(safe-area-inset-top)",
+    paddingTop: native
+      ? "max(env(safe-area-inset-top), 32px)"
+      : "env(safe-area-inset-top)",
     zoom: uiScale,
   } as CSSProperties;
 
@@ -86,7 +94,10 @@ function Shell() {
           <div className="pointer-events-none absolute left-1/2 top-[8px] z-[80] hidden h-[20px] w-[104px] -translate-x-1/2 rounded-full bg-[#0a1218] md:block" />
 
           <div className="relative flex-1 overflow-hidden">
-            <div className="absolute left-0 top-0 overflow-hidden" style={zoomStyle}>
+            <div
+              className="absolute left-0 top-0 overflow-hidden bg-white dark:bg-panel"
+              style={zoomStyle}
+            >
               {stack.map((r, i) => {
                 const isTop = i === top;
                 return (
