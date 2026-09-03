@@ -17,12 +17,16 @@ import { seedData, uid } from "../data/seed";
 
 const DATA_KEY = "dnevnik:data:v1";
 const THEME_KEY = "dnevnik:theme";
+const SCALE_KEY = "dnevnik:scale";
 
 interface StoreValue {
   lessons: Lesson[];
   homework: Homework[];
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
+  /** Масштаб интерфейса (1 = обычный). Применяется через CSS-zoom. */
+  uiScale: number;
+  setUiScale: (v: number) => void;
   /** true, если сохранённые данные не удалось прочитать (загружено демо). */
   loadError: boolean;
   addLesson: (data: Omit<Lesson, "id">) => Lesson;
@@ -57,6 +61,15 @@ function loadTheme(): ThemeMode {
   }
 }
 
+function loadScale(): number {
+  try {
+    const v = Number(localStorage.getItem(SCALE_KEY));
+    return v >= 0.7 && v <= 1.5 ? v : 1;
+  } catch {
+    return 1;
+  }
+}
+
 export function StoreProvider({ children }: { children: ReactNode }) {
   // Одно чтение хранилища за всё время жизни приложения.
   const [initial] = useState(loadInitial);
@@ -82,6 +95,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, [theme]);
 
   const setTheme = useCallback((t: ThemeMode) => setThemeState(t), []);
+
+  const [uiScale, setUiScaleState] = useState<number>(loadScale);
+  useEffect(() => {
+    try {
+      localStorage.setItem(SCALE_KEY, String(uiScale));
+    } catch { /* noop */ }
+  }, [uiScale]);
+  const setUiScale = useCallback(
+    (v: number) => setUiScaleState(Math.min(1.5, Math.max(0.7, Number(v) || 1))),
+    [],
+  );
 
   const addLesson = useCallback((data: Omit<Lesson, "id">) => {
     const lesson: Lesson = { ...data, id: uid() };
@@ -140,6 +164,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       homework,
       theme,
       setTheme,
+      uiScale,
+      setUiScale,
       loadError,
       addLesson,
       updateLesson,
@@ -148,7 +174,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       toggleHomework,
       resetDemo,
     }),
-    [lessons, homework, theme, setTheme, loadError, addLesson, updateLesson, deleteLesson, addHomework, toggleHomework, resetDemo],
+    [lessons, homework, theme, setTheme, uiScale, setUiScale, loadError, addLesson, updateLesson, deleteLesson, addHomework, toggleHomework, resetDemo],
   );
 
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>;
