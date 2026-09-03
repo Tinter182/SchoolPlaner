@@ -43,9 +43,42 @@ npm run dev        # разработка
 npm run build      # прод-сборка в dist/
 ```
 
-## Android
+## Запуск на телефоне (Android)
 
-Приложение — mobile-first PWA: откройте его в Chrome на телефоне и выберите
-«Добавить на главный экран» — оно установится как приложение (иконка, полноэкранный
-режим, офлайн-хранение данных). Для нативной обёртки APK проект совместим с
-Capacitor/Bubblewrap поверх собранного `dist/`.
+### Путь 1 — PWA (быстро, без Android Studio)
+
+1. `npm run build` → появится папка `dist/`
+2. Разместите `dist/` на любом HTTPS-хостинге (быстрее всего — Netlify Drop:
+   app.netlify.com/drop, просто перетащите папку)
+3. Откройте ссылку в Chrome на телефоне → ⋮ → «Установить приложение» /
+   «Добавить на главный экран»
+
+Получится иконка на рабочем столе, полноэкранный режим и офлайн-работа
+(service worker кэширует приложение после первого визита). Данные хранятся
+в localStorage телефона.
+
+### Путь 2 — настоящий APK (Capacitor)
+
+```bash
+npm run build
+npm install @capacitor/core @capacitor/cli @capacitor/android
+npx cap init "Дневник" "com.dnevnik.app" --web-dir=dist
+npx cap add android
+npx cap sync
+
+# Windows:
+cd android && gradlew.bat assembleDebug
+# Linux/macOS:
+cd android && ./gradlew assembleDebug
+```
+
+APK появится в `android/app/build/outputs/apk/debug/app-debug.apk` —
+перекиньте файл на телефон и установите («Неизвестные источники» → разрешить),
+либо `adb install app-debug.apk`. Нужны JDK 17 и Android SDK (проще всего —
+установить Android Studio, она ставит и то и другое; можно и собрать через
+Build → Build APK(s)).
+
+### Путь 3 — PWABuilder
+
+Разместите билд на HTTPS (см. путь 1), откройте pwabuilder.com, вставьте адрес —
+сервис соберёт подписанный APK в пару кликов, без Android Studio.
