@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Homework, Lesson, Weekday } from "../types";
-import { homeworkOfGroup, lessonsForDay, useStore } from "../storage/store";
+import { homeworkOfGroupDay, lessonsForDay, useStore } from "../storage/store";
 import { useNav } from "../nav";
 import {
   formatDateMed,
@@ -43,6 +43,25 @@ export function MainScreen() {
   }, []);
 
   const q = query.trim().toLowerCase();
+
+  /**
+   * Бейджи вкладок: сколько невыполненных заданий «принадлежит» каждому дню
+   * (календарная дата задания выпадает на этот день недели). Задание на
+   * четверг даст бейдж только вкладке «Чт».
+   */
+  const pendingByDay = useMemo(() => {
+    const res: Record<number, number> = {};
+    for (let w = 1; w <= 7; w++) {
+      const seen = new Set<string>();
+      for (const l of lessonsForDay(lessons, w as Weekday)) {
+        for (const h of homeworkOfGroupDay(homework, lessons, l, w as Weekday)) {
+          if (!h.completed) seen.add(h.id);
+        }
+      }
+      res[w] = seen.size;
+    }
+    return res;
+  }, [lessons, homework]);
 
   const lessonMatches = useMemo(
     () =>
@@ -174,13 +193,14 @@ export function MainScreen() {
     const ls = lessonsForDay(lessons, day);
     if (!ls.length) return renderNoLessons();
 
-    // Задания принадлежат группам (по иконке), поэтому на вкладке дня
-    // считаем уникальные задания всех групп этого дня — без двойного счёта.
+    // На вкладке дня считаются только задания, «принадлежащие» этому дню:
+    // их календарная дата выпадает на этот день недели. Уникальные —
+    // без двойного счёта, если предмет встречается в группе.
     const seen = new Set<string>();
     let total = 0;
     let pending = 0;
     for (const l of ls) {
-      for (const h of homeworkOfGroup(homework, lessons, l)) {
+      for (const h of homeworkOfGroupDay(homework, lessons, l, day)) {
         if (seen.has(h.id)) continue;
         seen.add(h.id);
         total++;
@@ -293,7 +313,14 @@ export function MainScreen() {
             </div>
           </div>
         )}
-        {!searchOpen && <DayTabs selected={day} onSelect={setDay} lessons={lessons} />}
+        {!searchOpen && (
+          <DayTabs
+            selected={day}
+            onSelect={setDay}
+            lessons={lessons}
+            pendingByDay={pendingByDay}
+          />
+        )}
       </header>
 
       {/* Контент */}

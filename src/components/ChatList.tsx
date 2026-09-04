@@ -1,6 +1,6 @@
 import type { Lesson } from "../types";
 import { homeworkOfGroup, lastHomework, useStore } from "../storage/store";
-import { timeRange } from "../utils/date";
+import { jsDayToWeekday, parseISO, timeRange, weekdayShort } from "../utils/date";
 import { Avatar } from "./Avatar";
 import { IconCheck, IconChecks } from "./icons";
 
@@ -33,7 +33,12 @@ export function LessonRow({
   query?: string;
 }) {
   const { homework, lessons } = useStore();
-  const hws = homeworkOfGroup(homework, lessons, lesson);
+  const groupHws = homeworkOfGroup(homework, lessons, lesson);
+  // Превью на вкладке показывает только задания, календарная дата которых
+  // выпадает на день недели этого урока. Внутри чата видны все задания группы.
+  const hws = groupHws.filter(
+    (h) => jsDayToWeekday(parseISO(h.date)) === lesson.weekday,
+  );
   const last = lastHomework(hws);
 
   return (
@@ -59,6 +64,10 @@ export function LessonRow({
               <span className="text-gray-400 dark:text-gray-500">Задание — </span>
               <Highlight text={last.text} query={query} />
             </>
+          ) : groupHws.length > 0 ? (
+            <span className="italic text-gray-400 dark:text-gray-500">
+              Нет заданий на {weekdayShort(lesson.weekday).toLowerCase()}
+            </span>
           ) : (
             <span className="italic text-gray-400 dark:text-gray-500">Заданий пока нет</span>
           )}
