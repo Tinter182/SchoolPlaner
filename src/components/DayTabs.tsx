@@ -10,10 +10,13 @@ export function DayTabs({
   selected,
   onSelect,
   lessons,
+  pendingByDay,
 }: {
   selected: Weekday | "all";
   onSelect: (v: Weekday | "all") => void;
   lessons: Lesson[];
+  /** Число невыполненных заданий, «принадлежащих» каждому дню недели. */
+  pendingByDay?: Record<number, number>;
 }) {
   const today = todayWeekday();
   const order: Weekday[] = Array.from(
@@ -64,9 +67,28 @@ export function DayTabs({
             ) : (
               weekdayShort(w)
             )}
-            {!active && hasLessons(w) && (
-              <span className="h-1.5 w-1.5 rounded-full bg-accent/60" aria-hidden="true" />
-            )}
+            {(() => {
+              const n = pendingByDay?.[w] ?? 0;
+              if (n > 0)
+                return (
+                  <span
+                    key={n}
+                    className={`anim-bounce-in min-w-[17px] rounded-full px-[5px] py-[1px] text-center text-[10.5px] font-bold leading-[14px] tabular-nums ${
+                      active
+                        ? "bg-white/25 text-white"
+                        : "bg-pending/15 text-pending"
+                    }`}
+                    aria-label={`Не выполнено: ${n}`}
+                  >
+                    {n}
+                  </span>
+                );
+              if (!active && hasLessons(w))
+                return (
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent/60" aria-hidden="true" />
+                );
+              return null;
+            })()}
           </button>
         );
       })}

@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { AppData, Homework, Lesson, ThemeMode, Weekday } from "../types";
 import { seedData, uid } from "../data/seed";
+import { jsDayToWeekday, parseISO } from "../utils/date";
 
 /**
  * Всё состояние приложения живёт в localStorage и переживает перезапуск.
@@ -227,6 +228,23 @@ export function homeworkOfGroup(
 /** Есть ли у урока «братья» по группе (другие уроки с той же иконкой). */
 export function hasGroupSibling(lessons: Lesson[], lesson: Lesson): boolean {
   return lessons.some((l) => l.id !== lesson.id && l.icon === lesson.icon);
+}
+
+/**
+ * Задания группы, «принадлежащие» конкретному дню недели: их календарная
+ * дата выпадает именно на этот день. Используется для превью на вкладках —
+ * задание на четверг видно только на вкладке «Чт», но внутри чата группы
+ * отображаются все задания (синхронизация сохраняется).
+ */
+export function homeworkOfGroupDay(
+  homework: Homework[],
+  lessons: Lesson[],
+  lesson: Lesson,
+  weekday: Weekday,
+): Homework[] {
+  return homeworkOfGroup(homework, lessons, lesson).filter(
+    (h) => jsDayToWeekday(parseISO(h.date)) === weekday,
+  );
 }
 
 /** Последнее задание урока (для превью в списке чатов). */
