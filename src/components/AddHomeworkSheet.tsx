@@ -3,7 +3,7 @@ import type { Lesson } from "../types";
 import { useStore } from "../storage/store";
 import {
   formatDateLong,
-  nextLessonDateISO,
+  nextGroupLessonDate,
   relativeDayLabel,
   timeRange,
   weekdayFull,
@@ -30,7 +30,7 @@ export function AddHomeworkSheet({
   /** вызывается с id нового задания (для прокрутки чата к нему) */
   onAdded?: (id: string) => void;
 }) {
-  const { addHomework } = useStore();
+  const { addHomework, lessons } = useStore();
   const { toast } = useToast();
 
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -54,8 +54,10 @@ export function AddHomeworkSheet({
   const canSubmit = text.trim().length > 0;
   const rel = relativeDayLabel(date);
 
-  // «Следующий урок»: ближайшее занятие этого предмета строго с завтрашнего дня.
-  const nextLessonISO = nextLessonDateISO(lesson.weekday);
+  // «Следующий урок»: ближайшее занятие ГРУППЫ предмета (уроки с той же
+  // иконкой в любые дни) строго с завтрашнего дня; сегодняшние пропускаются.
+  const next = nextGroupLessonDate(lessons, lesson.icon);
+  const groupSize = lessons.filter((l) => l.icon === lesson.icon).length;
 
   const submit = () => {
     if (!canSubmit) return;
@@ -77,6 +79,12 @@ export function AddHomeworkSheet({
           <div className="text-[12px] text-gray-500 dark:text-gray-400">
             {weekdayFull(lesson.weekday)} · {timeRange(lesson.start, lesson.end)}
           </div>
+          {groupSize > 1 && (
+            <div className="mt-[2px] text-[11.5px] font-medium text-accent-deep dark:text-accent">
+              {lesson.icon} Группа из {groupSize} уроков — задание будет видно во всех чатах
+              предмета
+            </div>
+          )}
         </div>
       </div>
 
@@ -117,8 +125,8 @@ export function AddHomeworkSheet({
             onChange={setDate}
             extraChips={[
               {
-                label: `След. урок · ${weekdayShort(lesson.weekday)}`,
-                iso: nextLessonISO,
+                label: `След. урок · ${weekdayShort(next.weekday)} ${next.start}`,
+                iso: next.iso,
               },
             ]}
           />

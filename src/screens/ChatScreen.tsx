@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import confetti from "canvas-confetti";
 import type { Homework } from "../types";
-import { homeworkOfLesson, pendingCount, useStore } from "../storage/store";
+import { homeworkOfGroup, pendingCount, useStore } from "../storage/store";
 import { useNav } from "../nav";
 import {
   formatDateLong,
@@ -48,11 +48,14 @@ export function ChatScreen({
   const scrollRef = useRef<HTMLDivElement>(null);
   const msgRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
+  // Лента = задания всей группы предмета (уроки с той же иконкой),
+  // поэтому «Математика» в Пн и во Вт показывает один и тот же список.
   const hws = useMemo(
-    () => (lesson ? homeworkOfLesson(homework, lesson.id) : []),
-    [homework, lesson],
+    () => (lesson ? homeworkOfGroup(homework, lessons, lesson) : []),
+    [homework, lessons, lesson],
   );
   const pending = pendingCount(hws);
+  const groupSize = lesson ? lessons.filter((l) => l.icon === lesson.icon).length : 1;
 
   // Группировка по датам (даты уже отсортированы по возрастанию).
   const groups = useMemo(() => {
@@ -152,6 +155,13 @@ export function ChatScreen({
           </h2>
           <p className="truncate text-[12px] leading-tight text-gray-400 dark:text-gray-500">
             {weekdayShort(lesson.weekday)} · {timeRange(lesson.start, lesson.end)}
+            {groupSize > 1 && (
+              <span className="text-accent">
+                {" "}
+                · группа {lesson.icon} {groupSize}{" "}
+                {plural(groupSize, "урок", "урока", "уроков")}
+              </span>
+            )}
             {pending > 0 && (
               <span className="text-pending">
                 {" "}

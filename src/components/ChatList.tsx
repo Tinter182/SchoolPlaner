@@ -1,5 +1,5 @@
 import type { Lesson } from "../types";
-import { homeworkOfLesson, lastHomework, useStore } from "../storage/store";
+import { homeworkOfGroup, lastHomework, useStore } from "../storage/store";
 import { timeRange } from "../utils/date";
 import { Avatar } from "./Avatar";
 import { IconCheck, IconChecks } from "./icons";
@@ -32,8 +32,8 @@ export function LessonRow({
   dayBadge?: string;
   query?: string;
 }) {
-  const { homework } = useStore();
-  const hws = homeworkOfLesson(homework, lesson.id);
+  const { homework, lessons } = useStore();
+  const hws = homeworkOfGroup(homework, lessons, lesson);
   const last = lastHomework(hws);
 
   return (

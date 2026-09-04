@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import type { Lesson, Weekday } from "../types";
-import { homeworkOfLesson, lessonsForDay, useStore } from "../storage/store";
+import { hasGroupSibling, homeworkOfGroup, lessonsForDay, useStore } from "../storage/store";
 import { useNav } from "../nav";
 import { plural, timeRange, weekdayFull, weekdayShort } from "../utils/date";
 import { Avatar } from "../components/Avatar";
@@ -42,7 +42,10 @@ export function SettingsScreen() {
     setEditorOpen(true);
   };
 
-  const deletingHw = deleting ? homeworkOfLesson(homework, deleting.id).length : 0;
+  // Задания принадлежат группе предмета (по иконке): при удалении урока
+  // они удаляются только если это ПОСЛЕДНИЙ урок группы, иначе переносятся.
+  const deletingGroupHw = deleting ? homeworkOfGroup(homework, lessons, deleting).length : 0;
+  const deletingHasSibling = deleting ? hasGroupSibling(lessons, deleting) : false;
 
   const ghostBtn =
     "rounded-full p-2 text-gray-400 transition hover:bg-black/[0.05] hover:text-ink active:scale-90 dark:hover:bg-white/[0.08] dark:hover:text-white";
@@ -264,16 +267,25 @@ export function SettingsScreen() {
             </div>
           </div>
         )}
-        {deletingHw > 0 ? (
-          <>
-            Домашние задания этого урока ({deletingHw}{" "}
-            {plural(deletingHw, "задание", "задания", "заданий")}) также будут удалены.
-            <br />
-            Это действие нельзя отменить.
-          </>
-        ) : (
-          "Это действие нельзя отменить."
-        )}
+        {deleting &&
+          (deletingGroupHw > 0 && deletingHasSibling ? (
+            <>
+              Задания предмета ({deletingGroupHw}{" "}
+              {plural(deletingGroupHw, "задание", "задания", "заданий")}){" "}
+              <b className="text-done">сохранятся</b> — они привязаны к группе{" "}
+              {deleting.icon} и останутся в других уроках предмета.
+            </>
+          ) : deletingGroupHw > 0 ? (
+            <>
+              Домашние задания этого предмета ({deletingGroupHw}{" "}
+              {plural(deletingGroupHw, "задание", "задания", "заданий")}) также будут удалены
+              — это последний урок группы {deleting.icon}.
+              <br />
+              Это действие нельзя отменить.
+            </>
+          ) : (
+            "Это действие нельзя отменить."
+          ))}
       </ConfirmDialog>
 
       <ConfirmDialog

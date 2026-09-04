@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Homework, Lesson, Weekday } from "../types";
-import { lessonsForDay, useStore } from "../storage/store";
+import { homeworkOfGroup, lessonsForDay, useStore } from "../storage/store";
 import { useNav } from "../nav";
 import {
   formatDateMed,
@@ -174,8 +174,20 @@ export function MainScreen() {
     const ls = lessonsForDay(lessons, day);
     if (!ls.length) return renderNoLessons();
 
-    const all = ls.flatMap((l) => homeworkOf(homework, l.id));
-    const pending = all.filter((h) => !h.completed).length;
+    // Задания принадлежат группам (по иконке), поэтому на вкладке дня
+    // считаем уникальные задания всех групп этого дня — без двойного счёта.
+    const seen = new Set<string>();
+    let total = 0;
+    let pending = 0;
+    for (const l of ls) {
+      for (const h of homeworkOfGroup(homework, lessons, l)) {
+        if (seen.has(h.id)) continue;
+        seen.add(h.id);
+        total++;
+        if (!h.completed) pending++;
+      }
+    }
+    const all = { length: total };
 
     return (
       <>
@@ -300,6 +312,4 @@ function Caption({ children }: { children: ReactNode }) {
   );
 }
 
-function homeworkOf(homework: { lessonId: string; completed: boolean }[], lessonId: string) {
-  return homework.filter((h) => h.lessonId === lessonId);
-}
+

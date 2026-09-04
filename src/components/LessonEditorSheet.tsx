@@ -160,13 +160,13 @@ export function LessonEditorSheet({
         {lesson ? "Сохранить" : "Добавить урок"}
       </button>
 
-      {lesson && (
-        <p className="mt-3 text-center text-[12px] leading-relaxed text-gray-400">
-          Задания урока привязаны к нему и не пропадут
-          <br />
-          при смене дня или времени.
-        </p>
-      )}
+      <p className="mt-3 text-center text-[12px] leading-relaxed text-gray-400">
+        {lesson
+          ? "Смена дня и времени не трогает задания."
+          : "Уроки с одинаковой иконкой объединяются в группу предмета."}
+        <br />
+        Задания принадлежат группе {icon} и видны во всех её уроках.
+      </p>
     </Sheet>
   );
 }
