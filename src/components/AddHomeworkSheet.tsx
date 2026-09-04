@@ -3,11 +3,11 @@ import type { Lesson } from "../types";
 import { useStore } from "../storage/store";
 import {
   formatDateLong,
-  parseISO,
+  nextLessonDateISO,
   relativeDayLabel,
   timeRange,
   weekdayFull,
-  jsDayToWeekday,
+  weekdayShort,
 } from "../utils/date";
 import { Sheet, useToast } from "./ui";
 import { CalendarPicker } from "./CalendarPicker";
@@ -54,6 +54,9 @@ export function AddHomeworkSheet({
   const canSubmit = text.trim().length > 0;
   const rel = relativeDayLabel(date);
 
+  // «Следующий урок»: ближайшее занятие этого предмета строго с завтрашнего дня.
+  const nextLessonISO = nextLessonDateISO(lesson.weekday);
+
   const submit = () => {
     if (!canSubmit) return;
     const hw = addHomework(lesson.id, date, text);
@@ -89,7 +92,10 @@ export function AddHomeworkSheet({
           <span className="block text-[11px] font-semibold uppercase tracking-wide text-gray-400">
             Дата
           </span>
-          <span className="block truncate text-[14.5px] font-semibold text-ink dark:text-white">
+          <span
+            key={date}
+            className="anim-pop block truncate text-[14.5px] font-semibold text-ink dark:text-white"
+          >
             {formatDateLong(date)}
             {rel && (
               <span className="ml-2 rounded-md bg-accent-soft px-1.5 py-[1px] text-[11px] font-bold text-accent-deep dark:bg-white/10 dark:text-accent">
@@ -106,7 +112,16 @@ export function AddHomeworkSheet({
 
       {calOpen && (
         <div className="anim-pop mt-2.5">
-          <CalendarPicker value={date} onChange={setDate} />
+          <CalendarPicker
+            value={date}
+            onChange={setDate}
+            extraChips={[
+              {
+                label: `След. урок · ${weekdayShort(lesson.weekday)}`,
+                iso: nextLessonISO,
+              },
+            ]}
+          />
         </div>
       )}
 

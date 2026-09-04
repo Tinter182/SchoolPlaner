@@ -116,6 +116,18 @@ export function nextOccurrenceISO(weekday: Weekday): string {
   return toISO(d);
 }
 
+/**
+ * Дата следующего занятия урока: строго начиная с завтрашнего дня.
+ * Если урок по расписанию сегодня — сегодняшнее занятие пропускается
+ * и берётся следующая неделя (+7 дней).
+ */
+export function nextLessonDateISO(weekday: Weekday): string {
+  const d = new Date();
+  const diff = ((weekday - jsDayToWeekday(d) + 7) % 7) || 7;
+  d.setDate(d.getDate() + diff);
+  return toISO(d);
+}
+
 export function relativeDayLabel(iso: string): string | null {
   const t = todayISO();
   if (iso === t) return "Сегодня";
