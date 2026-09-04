@@ -116,16 +116,46 @@ export function nextOccurrenceISO(weekday: Weekday): string {
   return toISO(d);
 }
 
+/** Информация о ближайшем занятии группы предметов. */
+export interface NextLessonInfo {
+  iso: string;
+  weekday: Weekday;
+  start: string;
+  title: string;
+}
+
 /**
- * Дата следующего занятия урока: строго начиная с завтрашнего дня.
- * Если урок по расписанию сегодня — сегодняшнее занятие пропускается
- * и берётся следующая неделя (+7 дней).
+ * Ближайшее занятие предмета (группа = уроки с одинаковой иконкой)
+ * по ВСЕМ дням недели, строго начиная с завтрашнего дня.
+ * Сегодняшние занятия группы пропускаются: если предмет есть сегодня,
+ * берётся его следующее занятие на следующей неделе.
  */
-export function nextLessonDateISO(weekday: Weekday): string {
-  const d = new Date();
-  const diff = ((weekday - jsDayToWeekday(d) + 7) % 7) || 7;
-  d.setDate(d.getDate() + diff);
-  return toISO(d);
+export function nextGroupLessonDate(
+  lessons: { weekday: Weekday; start: string; title: string; icon: string }[],
+  icon: string,
+): NextLessonInfo {
+  const tw = todayWeekday();
+  let best: { offset: number; lesson: (typeof lessons)[number] } | null = null;
+  for (const l of lessons) {
+    if (l.icon !== icon) continue;
+    let offset = (l.weekday - tw + 7) % 7;
+    if (offset === 0) offset = 7; // сегодняшнее занятие группы пропускаем
+    if (
+      !best ||
+      offset < best.offset ||
+      (offset === best.offset && l.start < best.lesson.start)
+    ) {
+      best = { offset, lesson: l };
+    }
+  }
+  // Группа всегда содержит хотя бы урок, из которого её открыли.
+  const b = best as { offset: number; lesson: (typeof lessons)[number] };
+  return {
+    iso: addDaysISO(todayISO(), b.offset),
+    weekday: b.lesson.weekday,
+    start: b.lesson.start,
+    title: b.lesson.title,
+  };
 }
 
 export function relativeDayLabel(iso: string): string | null {

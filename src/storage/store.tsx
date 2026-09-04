@@ -120,12 +120,22 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
-  /** Удаление урока вместе со всеми его заданиями (с подтверждением в UI). */
+  /**
+   * Удаление урока. Если в группе предмета (та же иконка) остаются другие
+   * уроки — задания группы сохраняются и переносятся на урок группы,
+   * иначе задания удаляются вместе с последним уроком предмета.
+   */
   const deleteLesson = useCallback((id: string) => {
-    setData((s) => ({
-      lessons: s.lessons.filter((l) => l.id !== id),
-      homework: s.homework.filter((h) => h.lessonId !== id),
-    }));
+    setData((s) => {
+      const target = s.lessons.find((l) => l.id === id);
+      if (!target) return s;
+      const sibling = s.lessons.find((l) => l.id !== id && l.icon === target.icon);
+      const lessons = s.lessons.filter((l) => l.id !== id);
+      const homework = sibling
+        ? s.homework.map((h) => (h.lessonId === id ? { ...h, lessonId: sibling.id } : h))
+        : s.homework.filter((h) => h.lessonId !== id);
+      return { lessons, homework };
+    });
   }, []);
 
   const addHomework = useCallback((lessonId: string, date: string, text: string) => {
@@ -195,11 +205,28 @@ export function lessonsForDay(lessons: Lesson[], day: Weekday): Lesson[] {
     .sort((a, b) => a.start.localeCompare(b.start) || a.title.localeCompare(b.title));
 }
 
-/** Задания урока, отсортированные по дате (затем по времени создания). */
-export function homeworkOfLesson(homework: Homework[], lessonId: string): Homework[] {
+/**
+ * Задания группы предмета. Группа — все уроки с одинаковой иконкой:
+ * «Математика» в понедельник и во вторник — один предмет 📐.
+ * Задание принадлежит группе, поэтому видно (и отмечается) во всех
+ * чатах предмета в любые дни.
+ */
+export function homeworkOfGroup(
+  homework: Homework[],
+  lessons: Lesson[],
+  lesson: Lesson,
+): Homework[] {
   return homework
-    .filter((h) => h.lessonId === lessonId)
+    .filter((h) => {
+      const owner = lessons.find((l) => l.id === h.lessonId);
+      return owner ? owner.icon === lesson.icon : false;
+    })
     .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt - b.createdAt);
+}
+
+/** Есть ли у урока «братья» по группе (другие уроки с той же иконкой). */
+export function hasGroupSibling(lessons: Lesson[], lesson: Lesson): boolean {
+  return lessons.some((l) => l.id !== lesson.id && l.icon === lesson.icon);
 }
 
 /** Последнее задание урока (для превью в списке чатов). */
