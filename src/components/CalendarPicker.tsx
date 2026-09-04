@@ -20,6 +20,7 @@ export function CalendarPicker({
   onChange,
   quick = true,
   marks,
+  extraChips,
 }: {
   value: string;
   onChange: (iso: string) => void;
@@ -27,6 +28,8 @@ export function CalendarPicker({
   quick?: boolean;
   /** точки под днями: есть задания (жёлтая — есть невыполненные) */
   marks?: Record<string, "pending" | "done">;
+  /** дополнительные чипы быстрых дат (например, «След. урок») */
+  extraChips?: { label: string; iso: string }[];
 }) {
   const selected = parseISO(value);
   const [view, setView] = useState({ y: selected.getFullYear(), m: selected.getMonth() });
@@ -128,7 +131,7 @@ export function CalendarPicker({
       </div>
 
       {quick && (
-        <div className="mt-2 flex items-center gap-2 border-t border-black/5 pt-3 dark:border-white/8">
+        <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-black/5 pt-3 dark:border-white/8">
           <button
             onClick={() => onChange(today)}
             className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition active:scale-95 ${
@@ -149,6 +152,19 @@ export function CalendarPicker({
           >
             Завтра
           </button>
+          {extraChips?.map((c) => (
+            <button
+              key={c.label}
+              onClick={() => onChange(c.iso)}
+              className={`rounded-full px-3.5 py-1.5 text-[12.5px] font-semibold transition active:scale-95 ${
+                value === c.iso
+                  ? "bg-accent text-white"
+                  : "bg-accent-soft text-accent-deep hover:bg-accent/20 dark:bg-white/10 dark:text-accent"
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
           {!isThisMonth && (
             <button
               onClick={() => {
