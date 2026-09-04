@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Homework, Lesson, Weekday } from "../types";
+import type { DaySelection, Homework, Lesson, Weekday } from "../types";
 import { lessonsForDay, useStore } from "../storage/store";
 import { useNav } from "../nav";
 import {
@@ -36,7 +36,7 @@ export function MainScreen() {
   const nav = useNav();
   const { toast } = useToast();
 
-  const [day, setDay] = useState<Weekday | "all">(todayWeekday());
+  const [day, setDay] = useState<DaySelection>(todayWeekday());
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
 
@@ -49,20 +49,26 @@ export function MainScreen() {
 
   /**
    * Бейджи вкладок — строго по ДАТЕ задания: сколько невыполненных заданий
-   * поставлено на даты, выпадающие на день недели вкладки (и только на
-   * сегодня или будущее). Просроченные (дата в прошлом) счётчик не раздувают.
-   * Наличие уроков в этот день не важно — важна дата задания.
+   * поставлено на БУДУЩИЕ даты, выпадающие на день недели вкладки.
+   * Сегодняшняя дата не в счёт (она живёт во вкладке «Сегодня», где
+   * показываются только выполненные), просроченные — тем более.
    */
   const pendingByDay = useMemo(() => {
     const today = todayISO();
     const res: Record<number, number> = {};
     for (const h of homework) {
-      if (h.completed || h.date < today) continue;
+      if (h.completed || h.date <= today) continue;
       const wd = jsDayToWeekday(parseISO(h.date));
       res[wd] = (res[wd] ?? 0) + 1;
     }
     return res;
   }, [homework]);
+
+  /** Выполненные задания с сегодняшней датой — зелёный бейдж вкладки «Сегодня». */
+  const doneToday = useMemo(
+    () => homework.filter((h) => h.date === todayISO() && h.completed).length,
+    [homework],
+  );
 
   const lessonMatches = useMemo(
     () =>
@@ -191,21 +197,58 @@ export function MainScreen() {
       );
     }
 
-    const ls = lessonsForDay(lessons, day);
+    // «Следующая неделя» (вкладка в конце панели) показывает уроки
+    // сегодняшнего дня недели, но только с будущими датами заданий.
+    const isNext = day === "next";
+    const wd: Weekday = isNext ? todayWeekday() : (day as Weekday);
+    const isTodayTab = !isNext && wd === todayWeekday();
+    const ls = lessonsForDay(lessons, wd);
     if (!ls.length) return renderNoLessons();
 
-    // Счётчик под вкладками — тоже по дате задания: день недели, на который
-    // выпадает дата, и только сегодня/будущее (просроченные не в счёт).
     const today = todayISO();
+
+    // -------- Вкладка «Сегодня»: показываются только ВЫПОЛНЕННЫЕ
+    // задания с сегодняшней датой — это «прогресс дня». --------
+    if (isTodayTab) {
+      let total = 0;
+      let done = 0;
+      for (const h of homework) {
+        if (h.date !== today) continue;
+        total++;
+        if (h.completed) done++;
+      }
+      return (
+        <>
+          <div className="flex items-center gap-2 px-4 pb-1 pt-3 text-[12px] font-medium text-gray-400 dark:text-gray-500">
+            <span>
+              {ls.length} {plural(ls.length, "урок", "урока", "уроков")}
+            </span>
+            <span className="h-[3px] w-[3px] rounded-full bg-gray-300 dark:bg-gray-600" />
+            <span>
+              {total > 0
+                ? `${total} ${plural(total, "задание", "задания", "заданий")} на сегодня · выполнено ${done}`
+                : "на сегодня заданий нет"}
+            </span>
+          </div>
+          <div key={`${day}`} className="stagger pb-8">
+            {ls.map((l) => (
+              <LessonRow key={l.id} lesson={l} scope="today" onOpen={() => openChat(l.id)} />
+            ))}
+          </div>
+        </>
+      );
+    }
+
+    // -------- Обычный день / «следующая неделя»: счётчик по дате
+    // задания — день недели даты, только будущие даты. --------
     let total = 0;
     let pending = 0;
     for (const h of homework) {
-      if (h.date < today) continue;
-      if (jsDayToWeekday(parseISO(h.date)) !== day) continue;
+      if (isNext ? h.date <= today : h.date < today) continue;
+      if (jsDayToWeekday(parseISO(h.date)) !== wd) continue;
       total++;
       if (!h.completed) pending++;
     }
-    const all = { length: total };
 
     return (
       <>
@@ -213,7 +256,7 @@ export function MainScreen() {
           <span>
             {ls.length} {plural(ls.length, "урок", "урока", "уроков")}
           </span>
-          {all.length > 0 && (
+          {total > 0 && (
             <>
               <span className="h-[3px] w-[3px] rounded-full bg-gray-300 dark:bg-gray-600" />
               <span>
@@ -226,7 +269,12 @@ export function MainScreen() {
         </div>
         <div key={`${day}`} className="stagger pb-8">
           {ls.map((l) => (
-            <LessonRow key={l.id} lesson={l} onOpen={() => openChat(l.id)} />
+            <LessonRow
+              key={l.id}
+              lesson={l}
+              scope={isNext ? "future" : undefined}
+              onOpen={() => openChat(l.id)}
+            />
           ))}
         </div>
       </>
@@ -317,6 +365,7 @@ export function MainScreen() {
             onSelect={setDay}
             lessons={lessons}
             pendingByDay={pendingByDay}
+            doneToday={doneToday}
           />
         )}
       </header>
