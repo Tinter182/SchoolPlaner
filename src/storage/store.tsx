@@ -247,6 +247,31 @@ export function homeworkOfGroupDay(
   );
 }
 
+/** Задания группы ровно на одну календарную дату (вкладка «Сегодня»). */
+export function homeworkOfGroupOnDate(
+  homework: Homework[],
+  lessons: Lesson[],
+  lesson: Lesson,
+  iso: string,
+): Homework[] {
+  return homeworkOfGroup(homework, lessons, lesson).filter((h) => h.date === iso);
+}
+
+/**
+ * Задания группы с датой строго после iso, день недели которых совпадает
+ * с днём урока (вкладка «следующая неделя» в конце панели дней).
+ */
+export function homeworkOfGroupAfter(
+  homework: Homework[],
+  lessons: Lesson[],
+  lesson: Lesson,
+  iso: string,
+): Homework[] {
+  return homeworkOfGroup(homework, lessons, lesson).filter(
+    (h) => h.date > iso && jsDayToWeekday(parseISO(h.date)) === lesson.weekday,
+  );
+}
+
 /** Последнее задание урока (для превью в списке чатов). */
 export function lastHomework(hws: Homework[]): Homework | null {
   return hws.length ? hws[hws.length - 1] : null;

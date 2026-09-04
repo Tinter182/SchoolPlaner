@@ -1,6 +1,13 @@
 import type { Lesson } from "../types";
-import { homeworkOfGroup, homeworkOfGroupDay, lastHomework, useStore } from "../storage/store";
-import { timeRange, weekdayShort } from "../utils/date";
+import {
+  homeworkOfGroup,
+  homeworkOfGroupAfter,
+  homeworkOfGroupDay,
+  homeworkOfGroupOnDate,
+  lastHomework,
+  useStore,
+} from "../storage/store";
+import { timeRange, todayISO, weekdayShort } from "../utils/date";
 import { Avatar } from "./Avatar";
 import { IconCheck, IconChecks } from "./icons";
 
@@ -26,17 +33,29 @@ export function LessonRow({
   onOpen,
   dayBadge,
   query,
+  scope,
 }: {
   lesson: Lesson;
   onOpen: () => void;
   dayBadge?: string;
   query?: string;
+  /**
+   * Какое «принадлежание» заданий показывать в превью:
+   * "today"  — только задания с сегодняшней датой (вкладка «Сегодня»);
+   * "future" — только будущие даты этого дня недели (вкладка «след. неделя»);
+   * undefined — все задания, дата которых выпадает на день недели урока.
+   */
+  scope?: "today" | "future";
 }) {
   const { homework, lessons } = useStore();
   const groupHws = homeworkOfGroup(homework, lessons, lesson);
-  // Превью на вкладке показывает только задания, календарная дата которых
-  // выпадает на день недели этого урока. Внутри чата видны все задания группы.
-  const hws = homeworkOfGroupDay(homework, lessons, lesson, lesson.weekday);
+  const today = todayISO();
+  const hws =
+    scope === "today"
+      ? homeworkOfGroupOnDate(homework, lessons, lesson, today)
+      : scope === "future"
+        ? homeworkOfGroupAfter(homework, lessons, lesson, today)
+        : homeworkOfGroupDay(homework, lessons, lesson, lesson.weekday);
   const last = lastHomework(hws);
 
   return (
@@ -62,6 +81,16 @@ export function LessonRow({
               <span className="text-gray-400 dark:text-gray-500">Задание — </span>
               <Highlight text={last.text} query={query} />
             </>
+          ) : scope === "today" ? (
+            <span className="italic text-gray-400 dark:text-gray-500">
+              {groupHws.some((h) => h.date === today)
+                ? "На сегодня пока не выполнено"
+                : "На сегодня заданий нет"}
+            </span>
+          ) : scope === "future" ? (
+            <span className="italic text-gray-400 dark:text-gray-500">
+              {groupHws.length > 0 ? "Впереди заданий нет" : "Заданий пока нет"}
+            </span>
           ) : groupHws.length > 0 ? (
             <span className="italic text-gray-400 dark:text-gray-500">
               Нет заданий на {weekdayShort(lesson.weekday).toLowerCase()}

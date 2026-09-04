@@ -37,6 +37,12 @@ export interface AppData {
 
 export type ThemeMode = "light" | "dark";
 
+/**
+ * Выбор на панели дней: конкретный день недели, «Все» или «next» —
+ * отдельная вкладка сегодняшнего дня в конце списка (будущие недели).
+ */
+export type DaySelection = Weekday | "all" | "next";
+
 /** Маршруты внутреннего стека навигации. */
 export type Route =
   | { type: "main" }
