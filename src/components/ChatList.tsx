@@ -1,6 +1,6 @@
 import type { Lesson } from "../types";
-import { homeworkOfGroup, lastHomework, useStore } from "../storage/store";
-import { jsDayToWeekday, parseISO, timeRange, weekdayShort } from "../utils/date";
+import { homeworkOfGroup, homeworkOfGroupDay, lastHomework, useStore } from "../storage/store";
+import { timeRange, weekdayShort } from "../utils/date";
 import { Avatar } from "./Avatar";
 import { IconCheck, IconChecks } from "./icons";
 
@@ -36,9 +36,7 @@ export function LessonRow({
   const groupHws = homeworkOfGroup(homework, lessons, lesson);
   // Превью на вкладке показывает только задания, календарная дата которых
   // выпадает на день недели этого урока. Внутри чата видны все задания группы.
-  const hws = groupHws.filter(
-    (h) => jsDayToWeekday(parseISO(h.date)) === lesson.weekday,
-  );
+  const hws = homeworkOfGroupDay(homework, lessons, lesson, lesson.weekday);
   const last = lastHomework(hws);
 
   return (
